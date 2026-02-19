@@ -14,8 +14,8 @@ ACC Race Control provides you the necessary information to create high quality s
 
 ## How to use it
 First we need to enable the broadcasting API from Assetto Corsa Competizione.
-To do that navigate to  
-`...\documents\Assetto Corsa Competizione\Config\broadcasting.json`  
+To do that navigate to
+`...\documents\Assetto Corsa Competizione\Config\broadcasting.json`
 and edit its contents.
 Replace the text with:
 ```
@@ -25,8 +25,51 @@ Replace the text with:
     "commandPassword": ""
 }
 ```
-and you are good to go.  
+and you are good to go.
 Then download the tool, unpack it and start it by running the `Start.bat` file.
+
+## Building on macOS
+
+The original project was Windows-only. The following changes were made to support building and running on macOS.
+
+### Prerequisites
+
+- [Azul Zulu 11](https://www.azul.com/downloads/?version=java-11-lts&os=macos&package=jdk) — used to compile and run the app
+- [Azul Zulu 17](https://www.azul.com/downloads/?version=java-17-lts&os=macos&package=jdk) — used only for `jpackage` to produce the DMG
+
+Install both to their default locations under `/Library/Java/JavaVirtualMachines/`.
+
+Set your shell `JAVA_HOME` to Zulu 11 (e.g. in `~/.zshrc`):
+```sh
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home
+```
+
+### Run from source
+
+```sh
+./gradlew :base:run
+```
+
+### Build a macOS DMG installer
+
+```sh
+./gradlew :base:buildMacDmg
+```
+
+Output: `base/build/dmg/ACC Race Control-<version>.dmg`
+
+The DMG contains a self-contained `.app` bundle with a bundled JRE — no Java installation is needed on the target Mac. On first launch macOS Gatekeeper will block the app because it is unsigned; right-click the app and choose **Open** to bypass this once.
+
+### What was changed to make macOS work
+
+The source code is unchanged. All fixes are in the build configuration:
+
+| Problem | Root cause | Fix |
+|---|---|---|
+| `NoClassDefFoundError: com/apple/eawt/QuitHandler` | Processing 3.3.6 uses an Apple-specific Java API removed in Java 9+ | Extracted `com.apple.eawt.*` from Zulu 8 `rt.jar` into `base/libs/apple-eawt-stub.jar`; patched it into `java.desktop` at runtime via `--patch-module` |
+| `unmappable character for encoding UTF8` | Source files are saved in Windows-1252 encoding | Added `compileJava.options.encoding = 'ISO-8859-1'` to `base/build.gradle` |
+| `cannot find symbol: class var` | Code uses Java 11+ features (`var`, `Optional.isEmpty()`) incompatible with Java 8 | Set `sourceCompatibility = '11'` and switched to Zulu 11 |
+| Gradle 6.7 incompatible with Java 17 | Gradle 6.7 only supports up to Java 15 | Used Zulu 11 for compilation (compatible with Gradle 6.7) and Zulu 17 only for `jpackage` |
 
 ## Stewarding made easy
 ACC Race Control is a tool developed by stewards for stewards. It's aim is it to make stewarding as easy and accessible as possible.
