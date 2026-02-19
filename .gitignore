@@ -25,6 +25,9 @@ hs_err_pid*
 #include gradle wrapper
 !gradle/wrapper/gradle-wrapper.jar
 
+# include macOS Apple eawt stub (needed to build on macOS)
+!base/libs/apple-eawt-stub.jar
+
 .gradle
 .settings
 .project
